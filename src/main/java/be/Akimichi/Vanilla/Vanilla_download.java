@@ -1,14 +1,18 @@
-package be.Akimichi;
+package be.Akimichi.Vanilla;
 
+import be.Akimichi.Config;
+import be.Akimichi.Create_Init_Config_File;
+import be.Akimichi.Utils.DownloadJava;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import be.Akimichi.LibConfig;
-
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
@@ -21,12 +25,12 @@ public class Vanilla_download {
 
 
     private static long totalBytes = 0; // Taille totale des fichiers à télécharger
-    private static AtomicLong downloadedBytes = new AtomicLong(0); // Bytes téléchargés
+    private static final AtomicLong downloadedBytes = new AtomicLong(0); // Bytes téléchargés
     private static final String VERSION_MANIFEST_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private static final String BASE_ASSET_URL = "https://resources.download.minecraft.net/";
     private static String MINECRAFT_VERSION = "1.20.1"; // Défini dynamiquement
     private static String gameFolderName = "MinecraftDownloader"; // Nom par défaut
-    private static ExecutorService executor = Executors.newFixedThreadPool(5); // Thread pool pour téléchargements parallèles
+    private static final ExecutorService executor = Executors.newFixedThreadPool(5); // Thread pool pour téléchargements parallèles
     private static String SetupVersion;
 
     private static final String[] IGNORED_FILES = {
@@ -46,16 +50,19 @@ public class Vanilla_download {
     }
 
 
+    @SuppressWarnings("unused")
     public static boolean download(ProgressCallback progressCallback) {
-        Map<String, Object> config;
+        @SuppressWarnings("rawtypes") Map config;
 
-        if (Create_Init_Config_File.exist()) {
+
             config = Create_Init_Config_File.readConfigFile();
+            assert config != null;
             MINECRAFT_VERSION = config.get("version").toString();
             gameFolderName = config.get("LauncherName").toString();
             SetupVersion = config.get("CurrentVersion").toString();
-        } else {
-            throw new RuntimeException("[MC_Launcher_lib] Library not initialized");
+
+        if (!is_official_version(MINECRAFT_VERSION)) {
+            throw new RuntimeException("[MC_Launcher_lib] "+MINECRAFT_VERSION+" is not a Supported Minecraft version.");
         }
         try {
 
@@ -71,10 +78,6 @@ public class Vanilla_download {
                 return false;
             }
 
-            if (!is_official_version(manifest, MINECRAFT_VERSION)) {
-                return false;
-            }
-
             if (!Objects.equals(MINECRAFT_VERSION, SetupVersion)) {
                 System.out.println("[MC_Launcher_lib] La version a changé. Suppression des anciens fichiers...");
                 cleanMinecraftDirectory();
@@ -97,31 +100,33 @@ public class Vanilla_download {
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             return false;
         }
     }
-    public static boolean download() {
-        Map<String, Object> config;
+    @SuppressWarnings("ConstantValue")
+    public static void download() {
+        @SuppressWarnings("rawtypes") Map config;
 
-        if (Create_Init_Config_File.exist()) {
             config = Create_Init_Config_File.readConfigFile();
+            assert config != null;
             MINECRAFT_VERSION = config.get("MinecraftVersion").toString();
             gameFolderName = config.get("LauncherName").toString();
             SetupVersion = config.get("CurrentVersion").toString();
-        } else {
-            throw new RuntimeException("[MC_Launcher_lib] Library not initialized");
+
+        if (!is_official_version(MINECRAFT_VERSION)) {
+            throw new RuntimeException("[MC_Launcher_lib] "+MINECRAFT_VERSION+" is not a supported Minecraft version. \nSupports versions are \n" + Arrays.toString(LibConfig.SupporteVersion));
         }
         try {
 
             JsonObject manifest = getManifest();
             if (manifest == null) {
                 System.out.println("[MC_Launcher_lib] Impossible de récupérer la liste des versions.");
-                return false;
+                return;
             }
 
-            if (!is_official_version(manifest, MINECRAFT_VERSION)) {
-                return false;
+            if (!is_official_version(MINECRAFT_VERSION)) {
+                return;
             }
 
             if (!Objects.equals(MINECRAFT_VERSION, SetupVersion)) {
@@ -134,21 +139,21 @@ public class Vanilla_download {
             String versionUrl = getVersionUrl(manifest, MINECRAFT_VERSION);
             if (versionUrl == null) {
                 System.out.println("[MC_Launcher_lib] URL introuvable pour la version sélectionnée.");
-                return false;
+                return;
             }
 
             // Télécharger les fichiers nécessaires
             ProgressCallback progressCallback = null;
             downloadVersionFiles(versionUrl, progressCallback);
+            downloadFileWithProgress(versionUrl ,config.get("pathToDirectory").toString() + "/"+ MINECRAFT_VERSION + ".json",progressCallback);
             System.out.println("[MC_Launcher_lib] Téléchargement terminé.");
 
             // Sauvegarder la version après un téléchargement réussi
             saveVersion();
-            return true;
+            DownloadJava.Download();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            System.out.println(e.getMessage());
         }
     }
 
@@ -159,7 +164,7 @@ public class Vanilla_download {
     }
 
 
-    private static boolean is_official_version(JsonObject manifest, String version) {
+    private static boolean is_official_version(String version) {
         return LibConfig.Is_SupportVersion(version);
     }
 
@@ -181,13 +186,15 @@ public class Vanilla_download {
 
     private static void deleteDirectory(File directory) {
         if (directory.isDirectory()) {
-            for (File file : directory.listFiles()) {
-                if (!file.getName().toString().equals("LauncherLibConfig.json") ) {
+            for (File file : Objects.requireNonNull(directory.listFiles())) {
+                if (!file.getName().equals("LauncherLibConfig.json") ) {
                     deleteDirectory(file);
                 }
             }
         }
-        directory.delete();
+         if (!directory.delete()){
+             System.out.println("[MC_Launcher_lib] Impossible de supprimer le dossier.");
+         }
     }
 
 
@@ -222,7 +229,7 @@ public class Vanilla_download {
                 JsonObject artifact = downloads.getAsJsonObject("artifact");
                 String libPath = artifact.get("path").getAsString();
 
-                if (!shouldSkipFile(libPath, IGNORED_FILES)) {
+                if (shouldSkipFile(libPath)) {
                     downloadFileWithProgressAsync(artifact.get("url").getAsString(), getGameDirectory() + "/libraries/" + libPath, progressCallback);
                 }
             }
@@ -233,7 +240,7 @@ public class Vanilla_download {
                 if (nativeArtifact != null) {
                     String libPath = nativeArtifact.get("path").getAsString();
 
-                    if (!shouldSkipFile(libPath, IGNORED_FILES)) {
+                    if (shouldSkipFile(libPath)) {
                         downloadFileWithProgressAsync(nativeArtifact.get("url").getAsString(), getGameDirectory() + "/libraries/" + libPath, progressCallback);
                     }
                 }
@@ -247,21 +254,23 @@ public class Vanilla_download {
 
         executor.shutdown();
         try {
-            executor.awaitTermination(1, TimeUnit.HOURS);
+            if (!executor.awaitTermination(1, TimeUnit.HOURS)){
+                System.out.println("[MC_Launcher_lib] Impossible de terminer l'executor");
+            }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
 
-    private static boolean shouldSkipFile(String filePath, String[] ignoredFiles) {
-        for (String ignored : ignoredFiles) {
+    private static boolean shouldSkipFile(String filePath) {
+        for (String ignored : Vanilla_download.IGNORED_FILES) {
             if (filePath.contains(ignored)) {
                 System.out.println("[MC_Launcher_lib] Ignoré : " + filePath);
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
 
@@ -307,7 +316,7 @@ public class Vanilla_download {
             try {
                 downloadFileWithProgress(urlString, destination, progressCallback);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         });
     }
@@ -324,6 +333,7 @@ public class Vanilla_download {
         HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
         conn.setRequestMethod("GET");
 
+        //noinspection ResultOfMethodCallIgnored
         destFile.getParentFile().mkdirs();
         try (InputStream in = conn.getInputStream();
              FileOutputStream out = new FileOutputStream(destFile)) {
@@ -334,6 +344,7 @@ public class Vanilla_download {
                 out.write(buffer, 0, bytesRead);
                 downloadedBytes.addAndGet(bytesRead);
                 double progress = (double) downloadedBytes.get() / totalBytes * 100;
+                //System.out.println("progress = " + progress);
 
                 if (progressCallback != null) {
                     progressCallback.onProgress(progress);  // Appeler le callback
@@ -374,29 +385,13 @@ public class Vanilla_download {
 
 
     private static void saveVersion() {
-        if (!Create_Init_Config_File.ChangeCurrentVersion(MINECRAFT_VERSION)) {
+        if (!Config.ChangeCurrentVersion(MINECRAFT_VERSION)) {
             throw new RuntimeException("[MC_Launcher_lib] Erreur lors de l'enregistrement de la version.");
         }
     }
 
-
-    private static boolean is_version_change(String version) {
-        File versionFile = new File(getGameDirectory() + "/version.txt");
-        if (!versionFile.exists()) {
-            return true; // Si le fichier de version n'existe pas, il faut télécharger
-        }
-        try {
-            Scanner scanner = new Scanner(versionFile);
-            String storedVersion = scanner.nextLine();
-            return !storedVersion.equals(version); // Si la version stockée est différente
-        } catch (IOException e) {
-            return true; // Si le fichier est introuvable ou corrompu, il faut télécharger
-        }
-    }
-
-
     static String downloadText(String urlString) throws IOException {
-        try (Scanner scanner = new Scanner(new URL(urlString).openStream(), "UTF-8")) {
+        try (Scanner scanner = new Scanner(new URL(urlString).openStream(), StandardCharsets.UTF_8)) {
             return scanner.useDelimiter("\\A").next();
         }
     }

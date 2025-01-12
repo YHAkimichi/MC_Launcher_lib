@@ -30,6 +30,12 @@ To download the game files, you can use the `Vanilla_download.download `method.
 ```java
 Vanilla_download.download();
 ```
+
+#### Forge_download
+```java
+Forge_download.download();
+```
+
 #### Download with Progress Callback
 
 To track download progress, use a callback function:
@@ -40,20 +46,29 @@ Vanilla_download.download(percentage -> {
 ```
 ### 3. Launch the Game
 
-Once the game files are downloaded, you can launch Minecraft using the `launchVanillaMinecraft`.launchGame method.
+Once the game files are downloaded, you can launch Minecraft using the `launchVanillaMinecraft.launchGame` method.
 
 ```java
 launchVanillaMinecraft.launchGame();
 ```
+
+#### Launch game with forge
+
+```java
+Launch_Forge.LaunchGame();
+```
+
 ### Optional: Change RAM Allocation
 
-To adjust the minimum and maximum RAM allocation for Minecraft, use the `Create_Init_Config_File.ChangeRam` method:
+To adjust the minimum and maximum RAM allocation for Minecraft, use the `Config.ChangeRam()` method:
 ```java
-Create_Init_Config_File.ChangeRam("MinRam", "MaxRam");
+Config.ChangeRam("MinRam", "MaxRam");
 ```
 Replace `"MinRam"` and `"MaxRam"` with your desired values (e.g., `"2"` for 2GB).
 
 ### Example Usage
+
+#### Vanilla exemple
 ```java
 InitLibrary.init("MyCustomLauncher", "1.12.2");
 
@@ -61,11 +76,21 @@ Vanilla_download.download(percentage -> {
     System.out.println("Download Progress: " + percentage + "%");
 });
 
-Create_Init_Config_File.ChangeRam("2", "4");
+Config.ChangeRam("2", "4");
 
 launchVanillaMinecraft.launchGame();
-
 ```
+#### Forge exemple
+```java
+InitLibrary.init("MyCustomLauncher", "1.12.2");
+
+Forge_download.download();
+
+Config.ChangeRam("2", "4");
+
+Launch_Forge.LaunchGame();
+```
+
 ### Note
 This version includes a mention that the library currently works only with cracked vanilla Minecraft.
 
@@ -86,6 +111,22 @@ This version includes a mention that the library currently works only with crack
 ##### "1.9.4", "1.9.3", "1.9.2", "1.9",
 ##### "1.8.9",
 ##### "1.7.9"
+###
+#### Forge"
+
+##### "1.20.6", "1.20.5", "1.20.4", "1.20.3", "1.20.2", "1.20.1","1.20",
+##### "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.19",
+##### "1.18.2", "1.18.1", "1.18",
+##### "1.17.1",
+##### "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1",
+##### "1.15.2", "1.15.1", "1.15",
+##### "1.14.4", "1.14.3", "1.14.2",
+##### "1.13.2",
+##### "1.12.2", "1.12.1", "1.12",
+##### "1.11.2", "1.11",
+##### "1.10.2", "1.10",
+##### "1.9.4", "1.9",
+
 
 ### Requirements
 
