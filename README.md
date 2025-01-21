@@ -89,7 +89,7 @@ Game.Forge.Launch_Update() //Download and launch the game
 ```
 
 ### Note
-This version includes a mention that the library currently works only with cracked vanilla Minecraft.
+This version includes a mention that the library currently works only with cracked Minecraft.
 
 ### List of support version
 #### Vanilla
