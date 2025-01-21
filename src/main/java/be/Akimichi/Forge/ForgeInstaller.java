@@ -1,6 +1,7 @@
 package be.Akimichi.Forge;
 
 import be.Akimichi.Create_Init_Config_File;
+import be.Akimichi.Utils.LibrerieFonction;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -105,7 +106,7 @@ public class ForgeInstaller {
 // Copier et renommer le fichier
         Files.copy(universalJar, renamedFile, StandardCopyOption.REPLACE_EXISTING);
 
-        System.out.println("[MC_Launcher_lib] Fichier copié et renommé en : " + renamedFile);
+        LibrerieFonction.Logger.log.debug("Fichier copié et renommé en : " + renamedFile);
     }
 
     private static String constructInstallerUrl(String minecraftVersion, String forgeVersion) {
@@ -137,7 +138,7 @@ public class ForgeInstaller {
         //System.out.println("Downloading " + urlString + " to " + targetPath);
         // Vérifier si l'URL correspond à l'URL ignorée
         if (urlString.equals(ignoredUrl)) {
-            System.out.println("[MC_Launcher_lib] Téléchargement ignoré pour l'URL : " + urlString);
+            LibrerieFonction.Logger.log.debug("Téléchargement ignoré pour l'URL : " + urlString);
             return;
         }
 
@@ -145,7 +146,7 @@ public class ForgeInstaller {
 
         // Si le fichier existe déjà et n'est pas vide, on considère qu'il est téléchargé
         if (destFile.exists() && destFile.length() > 0) {
-            System.out.println("[MC_Launcher_lib] Fichier déjà téléchargé : " + targetPath.toString());
+            LibrerieFonction.Logger.log.debug("Fichier déjà téléchargé : " + targetPath.toString());
             return;
         }
 
@@ -167,14 +168,14 @@ public class ForgeInstaller {
 
             if (redirect) {
                 currentUrl = conn.getHeaderField("Location");
-                System.out.println("[MC_Launcher_lib] Redirection vers : " + currentUrl);
+                LibrerieFonction.Logger.log.debug("Redirection vers : " + currentUrl);
                 redirectCount++;
 
                 if (redirectCount > maxRedirects) {
-                    throw new IOException("Trop de redirections (limite de " + maxRedirects + ")");
+                    LibrerieFonction.Logger.log.error("Trop de redirections (limite de " + maxRedirects + ")");
                 }
             } else if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw new IOException("Erreur HTTP : " + responseCode + " pour l'URL : " + currentUrl);
+                LibrerieFonction.Logger.log.error("Erreur HTTP : " + responseCode + " pour l'URL : " + currentUrl);
             } else {
                 // Téléchargement du fichier après avoir suivi toutes les redirections
                 destFile.getParentFile().mkdirs();
@@ -190,28 +191,9 @@ public class ForgeInstaller {
                         downloadedSize += bytesRead;
                     }
                 }
-                System.out.println("[MC_Launcher_lib] Téléchargé avec succès : " + targetPath.toString());
+                LibrerieFonction.Logger.log.debug("Téléchargé avec succès : " + targetPath.toString());
             }
         } while (redirect);
-    }
-
-
-    // Méthode pour calculer la somme de contrôle SHA-256 (optionnelle)
-    public static String calculateChecksum(Path filePath) throws IOException, NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (InputStream fis = Files.newInputStream(filePath)) {
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                digest.update(buffer, 0, bytesRead);
-            }
-        }
-        byte[] hash = digest.digest();
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            hexString.append(String.format("%02x", b));
-        }
-        return hexString.toString();
     }
 
     private static void executeForgeInstallerSilently(String installerPath) throws IOException, InterruptedException {
@@ -221,15 +203,15 @@ public class ForgeInstaller {
         command.add(installerPath);
         command.add("-e");
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        System.out.println("Commande d'extraction : " + String.join(" ", command));
+        LibrerieFonction.Logger.log.debug("Commande d'extraction : " + String.join(" ", command));
         processBuilder.inheritIO();
         Process process = processBuilder.start();
         process.waitFor();
 
         if (process.exitValue() == 0) {
-            System.out.println("Extraction de Forge terminée en mode silencieux.");
+            LibrerieFonction.Logger.log.info("Extraction de Forge terminée");
         } else {
-            System.err.println("Erreur lors de l'extraction de Forge. Code d'erreur : " + process.exitValue());
+            LibrerieFonction.Logger.log.error("Erreur lors de l'extraction de Forge. Code d'erreur : " + process.exitValue());
         }
     }
 

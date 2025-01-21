@@ -21,7 +21,6 @@ public class Launch_Forge {
 
     public static void LaunchGame() throws IOException {
 
-        System.out.println("[MC_Launcher_lib] Launching Minecraft " + MINECRAFT_VERSION + "...");
         @SuppressWarnings("rawtypes") Map config;
         String FullforgeVersion;
         String forgeVersion;
@@ -50,14 +49,14 @@ public class Launch_Forge {
         }
         //Path versionJsonPath = Paths.get(versionDir + "/" + FullforgeVersion + ".json");
         if (!Files.exists(versionJsonPath)) {
-            Logger.log("Le fichier de configuration de Forge est introuvable : " + versionJsonPath);
+            Logger.log.debug("Le fichier de configuration de Forge est introuvable : " + versionJsonPath);
             return;
         }
 
         // Lire les informations nécessaires à partir du fichier JSON Forge
         JsonObject forgeConfig = readForgeConfig(versionJsonPath);
         if (forgeConfig == null) {
-            Logger.log("Erreur lors de la lecture du fichier Forge JSON.");
+            Logger.log.debug("Erreur lors de la lecture du fichier Forge JSON.");
             return;
         }
 
@@ -72,7 +71,7 @@ public class Launch_Forge {
         try (FileReader reader = new FileReader(versionJsonPath.toFile())) {
             return JsonParser.parseReader(reader).getAsJsonObject();
         } catch (IOException e) {
-            Logger.log("Erreur lors de la lecture du fichier Forge JSON: " + e.getMessage());
+            Logger.log.debug("Erreur lors de la lecture du fichier Forge JSON: " + e.getMessage());
             return null;
         }
     }
@@ -95,11 +94,7 @@ public class Launch_Forge {
         }else {
             String versionDir = MINECRAFT_DIR + "/versions/" + MINECRAFT_VERSION + "-forge" + MINECRAFT_VERSION + "-" + forgeVersion +"-"+ MINECRAFT_VERSION;
             VersionJsonPath = Path.of(versionDir + "/"+ MINECRAFT_VERSION +  "-forge" + MINECRAFT_VERSION + "-" + forgeVersion + "-" + MINECRAFT_VERSION + ".json");
-        }// Le répertoire des bibliothèques Minecraft
-        //Path VersionJsonPath = Paths.get(MINECRAFT_DIR + "/versions/" + MINECRAFT_VERSION + "-forge-" + forgeVersion + "/"+MINECRAFT_VERSION + "-forge-" + forgeVersion+".json");
-        //String ignoreList = "-DignoreList=ClassLoader,bootstrap,joptsimple,client,bootstraplauncher,securejarhandler,asm-commons,asm-util,asm-analysis,asm-tree,asm,JarJarFileSystems,client-extra,fmlcore,fmlclient,javafmllanguage,lowcodelanguage,mclanguage,forge-,1.20.1.jar";
-        //ignoreList = ignoreList.replace("${library_directory}", libraryDirectory).replace("${version_name}", forgeVersion);
-
+        }
 
         assert config != null;
         command.add("\""+config.get("JavaPath").toString()+"\"");
@@ -119,10 +114,10 @@ public class Launch_Forge {
                     command.add(arg.getAsString().replace("${library_directory}", libraryDirectory)
                             .replace("${version_name}", "client")
                             .replace("${classpath_separator}", File.pathSeparator));
-                    Logger.log("Argument JVM ajouté : " + arg.getAsString());
+                    Logger.log.debug("Argument JVM ajouté : " + arg.getAsString());
                 }
             } else {
-                Logger.log("Aucun argument JVM supplémentaire dans le fichier JSON.");
+                Logger.log.debug("Aucun argument JVM supplémentaire dans le fichier JSON.");
             }
         }
 
@@ -136,18 +131,15 @@ public class Launch_Forge {
                 ListClassPath.addAll(VanillaClassPath);
             }
         }
-
-
-
         // Inclure le fichier principal de Forge
 
         String mainForgeJar = MINECRAFT_DIR + "/client.jar" ; // Chemin vers le fichier principal de Forge
         File mainForgeFile = new File(mainForgeJar);
         if (mainForgeFile.exists()) {
             ListClassPath.add(mainForgeFile.getAbsolutePath());
-            Logger.log("Fichier principal Forge ajouté au classpath : " + mainForgeFile.getAbsolutePath());
+            Logger.log.debug("Fichier principal Forge ajouté au classpath : " + mainForgeFile.getAbsolutePath());
         } else {
-            Logger.log("Fichier principal Forge introuvable : " + mainForgeJar);
+            Logger.log.debug("Fichier principal Forge introuvable : " + mainForgeJar);
         }
 
 
@@ -171,7 +163,7 @@ public class Launch_Forge {
         if (getVersionAsNumber(MINECRAFT_VERSION) > 1130) {
 
             getMinecraftArgs(forgeVersion, gameDir, command);
-            Logger.log("Commande complète : " + command);
+            Logger.log.debug("Commande complète : " + command);
 
         }
 
@@ -184,10 +176,10 @@ public class Launch_Forge {
                             .replace("${assetsDir}", MINECRAFT_DIR + "/assets")
                             .replace("${versionName}", forgeVersion)
                             .replace("${classpath_separator}", File.pathSeparator));
-                    Logger.log("Argument Minecraft ajouté : " + arg.getAsString());
+                    Logger.log.debug("Argument Minecraft ajouté : " + arg.getAsString());
                 }
             } else {
-                Logger.log("Aucun argument Minecraft supplémentaire dans le fichier JSON.");
+                Logger.log.debug("Aucun argument Minecraft supplémentaire dans le fichier JSON.");
             }
         }else {
             String minecraftArguments = forgeConfig.get("minecraftArguments").getAsString();
@@ -205,7 +197,7 @@ public class Launch_Forge {
                         .replace("${auth_uuid}", "UUID")
                         .replace("${auth_access_token}", "fake_access_token")
                         .replace("${user_type}", "mojang"));
-                Logger.log("Argument Minecraft ajouté : " + arg);
+                Logger.log.debug("Argument Minecraft ajouté : " + arg);
             }
         }
 
@@ -233,7 +225,7 @@ public class Launch_Forge {
                 JsonObject artifact = downloads.getAsJsonObject("artifact");
                 if (artifact.has("path")) {
                     String path = artifact.get("path").getAsString();
-                    Logger.log("[MC_Launcher_lib] JAR ajouter : "+MINECRAFT_DIR+"/libraries/"+ path);
+                    Logger.log.debug("JAR ajouter : "+MINECRAFT_DIR+"/libraries/"+ path);
                     File file = new File(MINECRAFT_DIR+"/libraries/"+ path);
                     ListClassPath.add(file.getAbsolutePath());
                 }
@@ -251,7 +243,6 @@ public class Launch_Forge {
             for (JsonElement libElement : librariesArray) {
                 JsonObject libObject = libElement.getAsJsonObject();
                 String name = libObject.get("name").getAsString();
-                //String url = libObject.has("url") ? libObject.get("url").getAsString() : "https://libraries.minecraft.net/";
                 libraries.add(new Library(name));
             }
         }
@@ -286,13 +277,13 @@ public class Launch_Forge {
 
     private static void launchMinecraft(List<String> command) {
         try {
-            Logger.log("Commande JVM : " + String.join(" ", command));
+            Logger.log.debug("Commande JVM : " + String.join(" ", command));
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.inheritIO(); // Rediriger la sortie pour voir les logs dans la console
             Process process = processBuilder.start();
             process.waitFor(); // Attendre la fin du processus
         } catch (IOException | InterruptedException e) {
-            Logger.log("Erreur lors du lancement du processus Minecraft : " + e.getMessage());
+            Logger.log.debug("Erreur lors du lancement du processus Minecraft : " + e.getMessage());
         }
     }
 

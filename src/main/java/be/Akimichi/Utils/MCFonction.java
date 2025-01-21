@@ -31,7 +31,7 @@ public class MCFonction {
         List<String> List = getNativeForVersion();
 
         if (!nativesDir.mkdirs() && !nativesDir.exists()){
-            System.out.println("[MC_Launcher_lib] Le fichier native n'a pas pu etre creer");
+            LibrerieFonction.Logger.log.error("Le fichier native n'a pas pu etre creer");
         }
 
         for (String element: List) {
@@ -39,11 +39,11 @@ public class MCFonction {
             if (pathToDir.exists()) {
                 extractJar(pathToDir, nativesDir);
             }else {
-                LibrerieFonction.Logger.log("Can't find file : " + pathToDir.getAbsolutePath());
+                LibrerieFonction.Logger.log.error("Can't find file : " + pathToDir.getAbsolutePath());
             }
         }
 
-        LibrerieFonction.Logger.log(nativesDir.getAbsolutePath());
+        LibrerieFonction.Logger.log.debug(nativesDir.getAbsolutePath());
         return nativesDir.getAbsolutePath();
     }
 
@@ -56,7 +56,7 @@ public class MCFonction {
                 File entryDestination = new File(destination, new File(entry.getName()).getName());
                 if (!entry.isDirectory()) {
                     if (!entryDestination.getParentFile().mkdirs() && !entryDestination.getParentFile().exists()) {
-                        System.err.println("[MC_Launcher_lib] Une erreur c'est produite lors de la création du fichier : " + entryDestination.getAbsolutePath());
+                        LibrerieFonction.Logger.log.error("Une erreur c'est produite lors de la création du fichier : " + entryDestination.getAbsolutePath());
                     }
                     try (InputStream in = jar.getInputStream(entry);
                          OutputStream out = new FileOutputStream(entryDestination)) {
@@ -165,15 +165,15 @@ public class MCFonction {
             List<String> lib = new ArrayList<>(List.of());
             for (String path : classpathEntries) {
                 lib.add(config.get("pathToDirectory").toString()+"/libraries/"+path);
-                LibrerieFonction.Logger.log(path);
+                LibrerieFonction.Logger.log.debug(path);
             }
-            LibrerieFonction.Logger.log("VanillaClassPath : " + lib);
+            LibrerieFonction.Logger.log.debug("VanillaClassPath : " + lib);
             return lib;
         } catch (IOException e) {
-            LibrerieFonction.Logger.log("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
+            LibrerieFonction.Logger.log.error("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
             return null;
         } catch (JsonSyntaxException e) {
-            LibrerieFonction.Logger.log("Erreur de syntaxe JSON : " + e.getMessage());
+            LibrerieFonction.Logger.log.error("Erreur de syntaxe JSON : " + e.getMessage());
             return null;
         }
     }

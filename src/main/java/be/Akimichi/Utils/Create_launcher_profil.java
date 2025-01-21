@@ -26,7 +26,7 @@ public class Create_launcher_profil {
     private static void createLauncherProfilesJson(Path path) {
         // Vérifier si le fichier existe déjà
         if (Files.exists(path)) {
-            LibrerieFonction.Logger.log("Le fichier launcher_profiles.json existe déjà.");
+            LibrerieFonction.Logger.log.debug("Le fichier launcher_profiles.json existe déjà.");
             return;
         }
         String version = Objects.requireNonNull(Create_Init_Config_File.readConfigFile()).get("MinecraftVersion").toString();
@@ -64,9 +64,9 @@ public class Create_launcher_profil {
         // Enregistrer dans le fichier JSON
         try (FileWriter writer = new FileWriter(path.toFile())) {
             writer.write(launcherProfiles.toString());
-            LibrerieFonction.Logger.log("Le fichier launcher_profiles.json a été créé avec succès à : " + path);
+            LibrerieFonction.Logger.log.debug("Le fichier launcher_profiles.json a été créé avec succès à : " + path);
         } catch (IOException e) {
-            System.err.println("Erreur lors de la création du fichier : " + e.getMessage());
+            LibrerieFonction.Logger.log.error("Erreur lors de la création du fichier : " + e.getMessage());
         }
     }
 }

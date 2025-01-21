@@ -1,6 +1,7 @@
 package be.Akimichi.Vanilla;
 
 import be.Akimichi.Create_Init_Config_File;
+import be.Akimichi.Utils.LibrerieFonction;
 
 
 import java.io.*;
@@ -11,16 +12,11 @@ import static be.Akimichi.Utils.MCFonction.*;
 public class launchVanillaMinecraft {
     private static String MINECRAFT_VERSION = "1.20.1"; // Défini dynamiquement
     private static String gameFolderName = "MinecraftLauncher"; // Nom par défaut
-
+    private static final Map config = Create_Init_Config_File.readConfigFile();
     @SuppressWarnings("unused")
     public static void launchGame() {
         try {
 
-            @SuppressWarnings("rawtypes") Map config;
-
-
-
-                config = Create_Init_Config_File.readConfigFile();
                 assert config != null;
                 MINECRAFT_VERSION = config.get("MinecraftVersion").toString();
                 gameFolderName = config.get("LauncherName").toString();
@@ -29,7 +25,7 @@ public class launchVanillaMinecraft {
             // Lancer le jeu
             launchMinecraft("user", MINECRAFT_VERSION, getGameDirectory(), config.get("MinRam").toString(), config.get("MaxRam").toString());
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LibrerieFonction.Logger.log.error(e.getMessage());
         }
     }
 
@@ -51,7 +47,8 @@ public class launchVanillaMinecraft {
 
             // Construire la commande de lancement
             List<String> command = new ArrayList<>();
-            command.add("java");
+            assert config != null;
+            command.add(config.get("JavaPath").toString());
             command.add("-Xmx"+RamMax+"G");
             command.add("-Xms"+RamMin+"G");
             if (getVersionAsNumber(MINECRAFT_VERSION) < 1130) {
@@ -61,19 +58,18 @@ public class launchVanillaMinecraft {
             command.add("-cp");
             command.add(String.join(File.pathSeparator, classPath));  // Windows : pathSeparator pour séparer les chemins
             command.add("net.minecraft.client.main.Main");
-            command.add(username);
             getMinecraftArgs(minecraftVersion, gameDir, command);
 
 
 
-            System.out.println("[MC_Launcher_lib] Commande : " + String.join(" ", command));
+            LibrerieFonction.Logger.log.debug("Commande : " + String.join(" ", command));
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.inheritIO();
             Process process = processBuilder.start();
             process.waitFor();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LibrerieFonction.Logger.log.error(e.getMessage());
         }
     }
 

@@ -1,11 +1,10 @@
 plugins {
     id 'java-library'
-    id("maven-publish")
-    id 'java'
+
 }
 
 group = 'be.Akimichi'
-version = '1.1-SNAPSHOT'
+version = '2.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -16,17 +15,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation 'com.google.code.gson:gson:2.11.0'
 }
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'be.Akimichi.Main'
-        )
-    }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
+
 
 test {
     useJUnitPlatform()

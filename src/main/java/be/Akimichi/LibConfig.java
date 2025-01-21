@@ -1,10 +1,19 @@
 package be.Akimichi;
 
-import java.util.HashMap;
-import java.util.Map;
+import be.Akimichi.Utils.LibrerieFonction;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+
+import static be.Akimichi.Config.readLauncherConfigFile;
+
 
 public class LibConfig {
-    public static final String LibVersion = "1.1-SNAPSHOT";
+    public static final String LibVersion = "2.1-SNAPSHOT";
     public static final String[] SupporteVersion = {
             "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21",
             "1.20.6", "1.20.5", "1.20.4", "1.20.3", "1.20.2", "1.20.1", "1.20",
@@ -55,6 +64,7 @@ public class LibConfig {
     }
 
     public static Map<String, Object> GetConfigFileData(String LauncherName, String Version, String appFolder) {
+        List<Map<String, String>> modsList = new ArrayList<>();
         Map<String, Object> config = new HashMap<>();
         config.put("MinecraftVersion", Version);
         config.put("MinRam", "2");
@@ -65,8 +75,9 @@ public class LibConfig {
         config.put("pathToDirectory", appFolder + "\\"+ LauncherName);
         config.put("IsForge", "false");
         config.put("ForgeVersion", "");
-        config.put("Debug", "true");
+        config.put("Debug", "false");
         config.put("JavaPath", "");
+        config.put("Mods", modsList);
         return config;
     }
 }

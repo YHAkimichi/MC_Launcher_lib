@@ -24,38 +24,30 @@ InitLibrary.init("LauncherName", "version");
 ```
 ### 2. Download Minecraft Files
 
-To download the game files, you can use the `Vanilla_download.download `method.
+To download the game files, you can use the `Game.Vanilla.Update()`method.
 #### Basic Download
 
 ```java
-Vanilla_download.download();
+Game.Vanilla.Update()
 ```
 
 #### Forge_download
 ```java
-Forge_download.download();
+Game.Forge.Update()
 ```
 
-#### Download with Progress Callback
-
-To track download progress, use a callback function:
-```java
-Vanilla_download.download(percentage -> {
-    System.out.println("Download Progress: " + percentage + "%");
-});
-```
 ### 3. Launch the Game
 
-Once the game files are downloaded, you can launch Minecraft using the `launchVanillaMinecraft.launchGame` method.
+Once the game files are downloaded, you can launch Minecraft using the `Game.Vanilla.Launch()` method.
 
 ```java
-launchVanillaMinecraft.launchGame();
+Game.Vanilla.Launch();
 ```
 
 #### Launch game with forge
 
 ```java
-Launch_Forge.LaunchGame();
+Game.Forge.Launch();
 ```
 
 ### Optional: Change RAM Allocation
@@ -66,29 +58,34 @@ Config.ChangeRam("MinRam", "MaxRam");
 ```
 Replace `"MinRam"` and `"MaxRam"` with your desired values (e.g., `"2"` for 2GB).
 
+### Forge Mods
+Add the following lines to add mods to forge
+```java
+static List<Integer> Mods = Arrays.asList(ModsProjectId, ModsProjectId, ...);
+Game.Mods.Add(Mods);
+```
+
 ### Example Usage
 
 #### Vanilla exemple
 ```java
 InitLibrary.init("MyCustomLauncher", "1.12.2");
 
-Vanilla_download.download(percentage -> {
-    System.out.println("Download Progress: " + percentage + "%");
-});
-
 Config.ChangeRam("2", "4");
 
-launchVanillaMinecraft.launchGame();
+Game.Vanilla.Launch_Update(); //Download and launch the game
 ```
 #### Forge exemple
 ```java
+static List<Integer> Mods = Arrays.asList(ModsProjectId, ModsProjectId, ...);
+
 InitLibrary.init("MyCustomLauncher", "1.12.2");
 
-Forge_download.download();
+Game.Mods.Add(Mods);
 
 Config.ChangeRam("2", "4");
 
-Launch_Forge.LaunchGame();
+Game.Forge.Launch_Update() //Download and launch the game
 ```
 
 ### Note
@@ -130,7 +127,7 @@ This version includes a mention that the library currently works only with crack
 
 ### Requirements
 
-- Java 8 or higher
+- Java 17 or higher
 
 ### Support
 

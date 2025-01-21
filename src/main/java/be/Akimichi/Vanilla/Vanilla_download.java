@@ -3,6 +3,7 @@ package be.Akimichi.Vanilla;
 import be.Akimichi.Config;
 import be.Akimichi.Create_Init_Config_File;
 import be.Akimichi.Utils.DownloadJava;
+import be.Akimichi.Utils.LibrerieFonction;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -62,7 +63,7 @@ public class Vanilla_download {
             SetupVersion = config.get("CurrentVersion").toString();
 
         if (!is_official_version(MINECRAFT_VERSION)) {
-            throw new RuntimeException("[MC_Launcher_lib] "+MINECRAFT_VERSION+" is not a Supported Minecraft version.");
+            throw new RuntimeException(MINECRAFT_VERSION+" is not a Supported Minecraft version.");
         }
         try {
 
@@ -74,33 +75,32 @@ public class Vanilla_download {
 
             JsonObject manifest = getManifest();
             if (manifest == null) {
-                System.out.println("[MC_Launcher_lib] Impossible de récupérer la liste des versions.");
+                LibrerieFonction.Logger.log.error("Failed to download manifest.");
                 return false;
             }
 
             if (!Objects.equals(MINECRAFT_VERSION, SetupVersion)) {
-                System.out.println("[MC_Launcher_lib] La version a changé. Suppression des anciens fichiers...");
+                LibrerieFonction.Logger.log.info("Versions changed. Deleting old version.");
                 cleanMinecraftDirectory();
             } else {
-                System.out.println("[MC_Launcher_lib] La version est déjà à jour. Aucun fichier ne sera supprimé.");
+                LibrerieFonction.Logger.log.info("Version already up to date.");
             }
 
             String versionUrl = getVersionUrl(manifest, MINECRAFT_VERSION);
             if (versionUrl == null) {
-                System.out.println("[MC_Launcher_lib] URL introuvable pour la version sélectionnée.");
+                LibrerieFonction.Logger.log.error("URL not found for the minecraft version");
                 return false;
             }
 
             // Télécharger les fichiers nécessaires
             downloadVersionFiles(versionUrl, progressCallback);
-            System.out.println("[MC_Launcher_lib] Téléchargement terminé.");
 
             // Sauvegarder la version après un téléchargement réussi
             saveVersion();
             return true;
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LibrerieFonction.Logger.log.error(e.getMessage());
             return false;
         }
     }
@@ -115,13 +115,13 @@ public class Vanilla_download {
             SetupVersion = config.get("CurrentVersion").toString();
 
         if (!is_official_version(MINECRAFT_VERSION)) {
-            throw new RuntimeException("[MC_Launcher_lib] "+MINECRAFT_VERSION+" is not a supported Minecraft version. \nSupports versions are \n" + Arrays.toString(LibConfig.SupporteVersion));
+            throw new RuntimeException(MINECRAFT_VERSION+" is not a supported Minecraft version. \nSupports versions are \n" + Arrays.toString(LibConfig.SupporteVersion));
         }
         try {
 
             JsonObject manifest = getManifest();
             if (manifest == null) {
-                System.out.println("[MC_Launcher_lib] Impossible de récupérer la liste des versions.");
+                LibrerieFonction.Logger.log.error("Failed to get manifest.");
                 return;
             }
 
@@ -130,15 +130,15 @@ public class Vanilla_download {
             }
 
             if (!Objects.equals(MINECRAFT_VERSION, SetupVersion)) {
-                System.out.println("[MC_Launcher_lib] La version a changé. Suppression des anciens fichiers...");
+                LibrerieFonction.Logger.log.info("Version change detected. Deleting old version.");
                 cleanMinecraftDirectory();
             } else {
-                System.out.println("[MC_Launcher_lib] La version est déjà à jour. Aucun fichier ne sera supprimé.");
+                LibrerieFonction.Logger.log.info("Version up to date");
             }
 
             String versionUrl = getVersionUrl(manifest, MINECRAFT_VERSION);
             if (versionUrl == null) {
-                System.out.println("[MC_Launcher_lib] URL introuvable pour la version sélectionnée.");
+                LibrerieFonction.Logger.log.error("URL not fond for this minecraft version.");
                 return;
             }
 
@@ -146,14 +146,13 @@ public class Vanilla_download {
             ProgressCallback progressCallback = null;
             downloadVersionFiles(versionUrl, progressCallback);
             downloadFileWithProgress(versionUrl ,config.get("pathToDirectory").toString() + "/"+ MINECRAFT_VERSION + ".json",progressCallback);
-            System.out.println("[MC_Launcher_lib] Téléchargement terminé.");
 
             // Sauvegarder la version après un téléchargement réussi
             saveVersion();
             DownloadJava.Download();
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LibrerieFonction.Logger.log.error(e.getMessage());
         }
     }
 
@@ -179,7 +178,7 @@ public class Vanilla_download {
         File minecraftDir = new File(getGameDirectory());
         if (minecraftDir.exists()) {
             deleteDirectory(minecraftDir);
-            System.out.println("[MC_Launcher_lib] Dossier " + minecraftDir.getAbsolutePath() + " supprimé.");
+            LibrerieFonction.Logger.log.debug("Folder " + minecraftDir.getAbsolutePath() + " deleted.");
         }
     }
 
@@ -193,7 +192,7 @@ public class Vanilla_download {
             }
         }
          if (!directory.delete()){
-             System.out.println("[MC_Launcher_lib] Impossible de supprimer le dossier.");
+             LibrerieFonction.Logger.log.warn("failed to delete " + directory.getAbsolutePath());
          }
     }
 
@@ -255,10 +254,10 @@ public class Vanilla_download {
         executor.shutdown();
         try {
             if (!executor.awaitTermination(1, TimeUnit.HOURS)){
-                System.out.println("[MC_Launcher_lib] Impossible de terminer l'executor");
+                LibrerieFonction.Logger.log.warn("Failede to shutdown executor");
             }
         } catch (InterruptedException e) {
-            System.out.println(e.getMessage());
+            LibrerieFonction.Logger.log.error(e.getMessage());
         }
     }
 
@@ -266,7 +265,7 @@ public class Vanilla_download {
     private static boolean shouldSkipFile(String filePath) {
         for (String ignored : Vanilla_download.IGNORED_FILES) {
             if (filePath.contains(ignored)) {
-                System.out.println("[MC_Launcher_lib] Ignoré : " + filePath);
+                LibrerieFonction.Logger.log.debug("Ignoré : " + filePath);
                 return false;
             }
         }
@@ -316,7 +315,7 @@ public class Vanilla_download {
             try {
                 downloadFileWithProgress(urlString, destination, progressCallback);
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                LibrerieFonction.Logger.log.error(e.getMessage());
             }
         });
     }
@@ -326,10 +325,10 @@ public class Vanilla_download {
         File destFile = new File(destination);
         if (destFile.exists()) {
             downloadedBytes.addAndGet(destFile.length());
-            System.out.println("[MC_Launcher_lib] Fichier déjà téléchargé : " + destination);
+            LibrerieFonction.Logger.log.debug("Already download : " + destination);
             return;
         }
-        System.out.printf("[MC_Launcher_lib] Taille totale calculée : %d octets%n", totalBytes);
+        LibrerieFonction.Logger.log.debug("Calculated : %d octets%n "+ totalBytes);
         HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
         conn.setRequestMethod("GET");
 
@@ -351,7 +350,7 @@ public class Vanilla_download {
                 }
             }
         }
-        System.out.println("[MC_Launcher_lib] Téléchargé : " + destination);
+        LibrerieFonction.Logger.log.info("Downloaded : " + destination);
     }
 
 
@@ -364,7 +363,7 @@ public class Vanilla_download {
         } else if (os.contains("linux")) {
             return "natives-linux";
         }
-        throw new UnsupportedOperationException("Système d'exploitation non supporté : " + os);
+        throw new UnsupportedOperationException("Operating system not support : " + os);
     }
 
 
@@ -386,7 +385,7 @@ public class Vanilla_download {
 
     private static void saveVersion() {
         if (!Config.ChangeCurrentVersion(MINECRAFT_VERSION)) {
-            throw new RuntimeException("[MC_Launcher_lib] Erreur lors de l'enregistrement de la version.");
+            LibrerieFonction.Logger.log.error("Version failed to save");
         }
     }
 

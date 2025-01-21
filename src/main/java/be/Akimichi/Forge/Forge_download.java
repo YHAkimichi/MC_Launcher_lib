@@ -36,8 +36,6 @@ public class Forge_download {
     }
 
     public static void download() {
-
-
         String minecraftVersion = Objects.requireNonNull(Create_Init_Config_File.readConfigFile()).get("MinecraftVersion").toString();
         if (!Is_ForgeSupporteVersion(minecraftVersion)) {
             throw new RuntimeException("[MC_Launcher_lib] "+minecraftVersion+" is not a supported Minecraft version. \nSupports versions are \n" + Arrays.toString(ForgeSupporteVersion));
@@ -62,11 +60,11 @@ public class Forge_download {
 
 
         List<String> urls = getForgeUrlsForVersion(forgeVersion, minecraftVersion);
-        Logger.log("Téléchargement des fichiers : " + urls);
+        Logger.log.debug("Téléchargement des fichiers : " + urls);
         createDownloadDirectory();
         downloadFiles(urls);
 
-        Logger.log(forgeVersion);
+        Logger.log.debug(forgeVersion);
 
         //if (Objects.equals(config.get("ForgeVersion").toString(), "") || !Objects.equals(config.get("ForgeVersion").toString(), forgeVersion)) {
             String installerPath;
@@ -76,9 +74,9 @@ public class Forge_download {
                 installerPath = DOWNLOAD_DIRECTORY + "forge-" + minecraftVersion + "-" + forgeVersion + "-" + minecraftVersion + "-installer.jar";
             }
             Config.setToForge(forgeVersion);
-            Logger.log("path "+ installerPath);
+            Logger.log.debug("path "+ installerPath);
             if (new File(installerPath).exists()) {
-                Logger.log("Fichier Forge trouvé, lancement de l'installation...");
+                Logger.log.debug("Fichier Forge trouvé, lancement de l'installation...");
                 if (getVersionAsNumber(minecraftVersion) < 1122) {
                   ForgeInstaller.Install();
                 }else executeForgeInstallerSilently(installerPath, minecraftDir);
@@ -97,7 +95,7 @@ public class Forge_download {
             connection.setRequestMethod("GET");
 
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                System.err.println("[MC_Launcher_lib] Impossible de récupérer la version Forge.");
+                Logger.log.error("Impossible de récupérer la version Forge.");
                 return null;
             }
 
@@ -111,7 +109,7 @@ public class Forge_download {
                 if (promos.has(recommendedKey)) {
                     return promos.get(recommendedKey).getAsString();
                 } else {
-                    Logger.log("Version 'recommended' non trouvée, essayant 'latest'.");
+                    Logger.log.debug("Version 'recommended' non trouvée, essayant 'latest'.");
                     String latestKey = minecraftVersion + "-latest";
                     if (promos.has(latestKey)) {
                         return promos.get(latestKey).getAsString();
@@ -119,7 +117,7 @@ public class Forge_download {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Erreur lors de la récupération des données: " + e.getMessage());
+            Logger.log.error("Erreur lors de la récupération des données: " + e.getMessage());
         }
 
         return null;
@@ -151,9 +149,9 @@ public class Forge_download {
         if (!Files.exists(path)) {
             try {
                 Files.createDirectories(path);
-                Logger.log("Répertoire créé: " + DOWNLOAD_DIRECTORY);
+                Logger.log.debug("Répertoire créé: " + DOWNLOAD_DIRECTORY);
             } catch (IOException e) {
-                System.err.println("[MC_Launcher_lib] Erreur lors de la création du répertoire: " + e.getMessage());
+                Logger.log.error("Erreur lors de la création du répertoire: " + e.getMessage());
             }
         }
     }
@@ -163,7 +161,7 @@ public class Forge_download {
             try {
                 downloadFile(fileUrl);
             } catch (IOException e) {
-                System.err.println("Erreur lors du téléchargement de " + fileUrl + ": " + e.getMessage());
+                Logger.log.warn("Erreur lors du téléchargement de " + fileUrl + ": " + e.getMessage());
             }
         }
     }
@@ -185,10 +183,10 @@ public class Forge_download {
                     outputStream.write(buffer, 0, bytesRead);
                 }
 
-                Logger.log("Fichier téléchargé : " + fileName);
+                Logger.log.debug("Fichier téléchargé : " + fileName);
             }
         } else {
-            System.err.println("[MC_Launcher_lib] Échec du téléchargement, code réponse: " + responseCode);
+            Logger.log.error("Échec du téléchargement, code réponse: " + responseCode);
         }
         connection.disconnect();
     }
@@ -204,18 +202,19 @@ public class Forge_download {
             command.add("--installClient");
             command.add(minecraftDir);
             ProcessBuilder processBuilder = new ProcessBuilder(command);
-            Logger.log("Commande d'installation : " + String.join(" ", command));
+            Logger.log.debug("Commande d'installation : " + String.join(" ", command));
+            Logger.log.info("File integrity check with Forge-Installer");
             processBuilder.inheritIO();
             Process process = processBuilder.start();
             process.waitFor();
 
             if (process.exitValue() == 0) {
-                Logger.log("Installation de Forge terminée en mode silencieux.");
+                Logger.log.debug("Installation de Forge terminée en mode silencieux.");
             } else {
-                System.err.println("[MC_Launcher_lib] Erreur lors de l'installation de Forge. Code d'erreur : " + process.exitValue());
+                Logger.log.error("Erreur lors de l'installation de Forge. Code d'erreur : " + process.exitValue());
             }
         } catch (IOException | InterruptedException e) {
-            System.err.println("[MC_Launcher_lib] Erreur lors de l'exécution silencieuse de l'installateur Forge: " + e.getMessage());
+            Logger.log.error("Erreur lors de l'exécution silencieuse de l'installateur Forge: " + e.getMessage());
         }
     }
     private static String getFileNameFromUrl(String fileUrl) {
